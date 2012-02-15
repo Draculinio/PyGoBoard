@@ -1,0 +1,38 @@
+Version 0.1.B
+--------------
+
+-Open file dialog added
+-Saw that only have compatibility with FF3
+-Buttons are disabled when needed
+
+Version 0.1.A
+--------------
+
+-Back Button Working.
+
+Version 0.1
+------------
+
+-Stones appear using forward button.
+
+Version 0.0.C
+-------------
+
+-The Goban is in the Goban Class.
+-Quited the prints in next and in open.
+
+Version 0.0.B
+-------------
+
+-Next button shows the move of the SGF. 
+-Maps added.
+
+Version 0.0.A
+-----------
+
+-Open first function. Opens the first Honninbo final match of 1941 and shows the names of the players.
+
+Version 0.0
+-----------
+
+There is only the skeleton of the program.

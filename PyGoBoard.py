@@ -102,11 +102,7 @@ class Principal(wx.Frame):
             mypath = os.path.basename(path)
             finalpath=path+mypath
             finalpath=finalpath[1:len(finalpath)]
-            #file=open(finalpath,"r")
             file=open(path,"r")
-            #file=open(mypath,"r")
-            #file=open(os.getcwd()+"\Hon-1941-1.sgf","r")
-            #Verifico que el archivo realmente sea un sgf
             SuccessFile=file.read(2)
             if(SuccessFile!='(;'):
                 wx.MessageBox("Invalid File",SuccessFile,wx.OK)
@@ -148,11 +144,6 @@ class Principal(wx.Frame):
             self.forward.Enable()
         dlg.Destroy()
 
-        #file=open(os.getcwd()+"\Hon-1941-1.sgf","r")
-
-
-
-
     def Posterior(self,event):
         activar=""
         self.puntero_jugada=self.puntero_jugada+1
@@ -173,7 +164,6 @@ class Principal(wx.Frame):
         self.mapear(activar)
         if(self.back.Enable()=='False'):
             self.back.Enable()
-
 
     def Previous(self,event):
         activar=""
@@ -205,8 +195,43 @@ class Principal(wx.Frame):
         jy=self.jugadas[jugada[3]]
         if(jugada[0]=="B"): #negro
             self.tablero.set_valor(jx,jy,2)
+            opuesto=1
         else: #blanco
             self.tablero.set_valor(jx,jy,1)
+            opuesto=2
+        print opuesto
+        #Busco que a los costados haya algo color opuesto como para ver si lo mato
+        if(self.tablero.get_valor(jx-1,jy)==opuesto):
+            grupo=self.tablero.buscar_grupos(jx-1,jy)
+            cant_lib=self.tablero.contar_libertades(grupo)
+            print "Izquierda"+str(cant_lib)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
+
+        if(self.tablero.get_valor(jx+1,jy)==opuesto):
+            grupo=self.tablero.buscar_grupos(jx+1,jy)
+            cant_lib=self.tablero.contar_libertades(grupo)
+            print "Derecha"+str(cant_lib)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
+
+        if(self.tablero.get_valor(jx,jy-1)==opuesto):
+            grupo=self.tablero.buscar_grupos(jx,jy-1)
+            cant_lib=self.tablero.contar_libertades(grupo)
+            print "Arriba"+str(cant_lib)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
+
+        if(self.tablero.get_valor(jx,jy+1)==opuesto):
+            grupo=self.tablero.buscar_grupos(jx,jy+1)
+            cant_lib=self.tablero.contar_libertades(grupo)
+            print "Abajo"+str(cant_lib)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
         self.Refresh()
 
     def desmapear(self,jugada): #desmapea una jugada
@@ -223,6 +248,7 @@ class Principal(wx.Frame):
 
 class Goban():
     def __init__(self):
+        self.asociativa=["x","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","x"]
         self.tablero=[[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
                 [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
                 [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
@@ -244,10 +270,90 @@ class Goban():
                 [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
                 [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
                 [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]]
+
     def set_valor(self,px,py,valor):
         self.tablero[px][py]=valor
     def get_valor(self,px,py):
         return self.tablero[px][py]
+
+    def buscar_grupos(self,x,y):
+        posicion=0
+        color=self.get_valor(x,y)
+        grupo=[]
+        agregado=self.asociativa[x]+self.asociativa[y]
+        grupo.append(agregado)
+        largo_array=len(grupo)
+        while posicion<largo_array:
+            posx=self.posiciones(grupo[posicion][0])
+            posy=self.posiciones(grupo[posicion][1])
+
+            #-----BUSQUEDA PARA AGREGAR ELEMENTOS AL GRUPO-----
+            #Busco izquierda
+            if (self.get_valor(posx,posy-1)==color): #El que esta arriba es del color
+                #Busco que no este incluido ya
+                flag_estaba=0
+                for b in range(0,len(grupo)):
+                    if(grupo[b]==self.asociativa[posx]+self.asociativa[posy-1]): #Lo encontro y no lo meto
+                        flag_estaba=1
+                if(flag_estaba==0):
+                    grupo.append(self.asociativa[posx]+self.asociativa[posy-1])
+
+            #Busco derecha
+            if (self.get_valor(posx,posy+1)==color): #El que esta arriba es del color
+                #Busco que no este incluido ya
+                flag_estaba=0
+                for b in range(0,len(grupo)):
+                    if(grupo[b]==self.asociativa[posx]+self.asociativa[posy+1]): #Lo encontro y no lo meto
+                        flag_estaba=1
+                if(flag_estaba==0):
+                    grupo.append(self.asociativa[posx]+self.asociativa[posy+1])
+
+            #Busco arriba
+            if (self.get_valor(posx-1,posy)==color): #El que esta arriba es del color
+                #Busco que no este incluido ya
+                flag_estaba=0
+                for b in range(0,len(grupo)):
+                    if(grupo[b]==self.asociativa[posx-1]+self.asociativa[posy]): #Lo encontro y no lo meto
+                        flag_estaba=1
+                if(flag_estaba==0):
+                    grupo.append(self.asociativa[posx-1]+self.asociativa[posy])
+
+            #Busco abajo
+            if (self.get_valor(posx+1,posy)==color): #El que esta arriba es del color
+                #Busco que no este incluido ya
+                flag_estaba=0
+                for b in range(0,len(grupo)):
+                    if(grupo[b]==self.asociativa[posx+1]+self.asociativa[posy]): #Lo encontro y no lo meto
+                        flag_estaba=1
+                if(flag_estaba==0):
+                    grupo.append(self.asociativa[posx+1]+self.asociativa[posy])
+            #-----FIN BUSQUEDA PARA AGREGAR ELEMENTOS AL GRUPO-----
+            posicion=posicion+1
+            largo_array=len(grupo)
+        return grupo
+
+    def contar_libertades(self,grupo):
+        cuenta_libertades=0
+        for i in range(0,len(grupo)):
+            posx=self.posiciones(grupo[i][0])
+            posy=self.posiciones(grupo[i][1])
+            if (self.get_valor(posx,posy-1)==0): #El que esta arriba esta vacio
+                cuenta_libertades=cuenta_libertades+1
+            if (self.get_valor(posx,posy+1)==0): #El que esta abajo esta vacio
+                cuenta_libertades=cuenta_libertades+1
+            if (self.get_valor(posx-1,posy)==0): #El que esta a la derecha esta vacio
+                cuenta_libertades=cuenta_libertades+1
+            if (self.get_valor(posx+1,posy)==0): #El que esta arriba esta vacio
+                cuenta_libertades=cuenta_libertades+1
+        return cuenta_libertades
+
+    def posiciones(self,posicion): #Retorna una posicion numerica dada una letra
+        a=0
+        for i in range(0,20):
+            if(self.asociativa[i]==posicion):
+                a=i
+        return a
+
 
 if __name__ == '__main__':
     app = wx.App()

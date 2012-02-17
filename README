@@ -1,3 +1,10 @@
+Version 0.1.D
+--------------
+
+-Quited some prints in the mapper that I added in 0.1.C.
+-Made an About MessageBox.
+-Added coordinates to the board.
+
 Version 0.1.C
 -------------
 

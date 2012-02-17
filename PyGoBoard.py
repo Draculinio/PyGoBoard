@@ -5,7 +5,7 @@
 ---------------------------------
 -----------PyGoBoard-------------
 ---------------------------------
-
+Version 0.1.D
 By Pablo Soifer -Draculinio-
 stackpointerex@gmail.com
 
@@ -13,7 +13,6 @@ stackpointerex@gmail.com
 
 import wx
 import os
-#import re
 
 class Principal(wx.Frame):
     def __init__(self, parent, title):
@@ -41,6 +40,7 @@ class Principal(wx.Frame):
         help.Append(wx.ID_ABOUT,'&About','About')
         self.Bind(wx.EVT_MENU,self.onQuit,id=wx.ID_EXIT)
         self.Bind(wx.EVT_MENU,self.onOpen,id=wx.ID_OPEN)
+        self.Bind(wx.EVT_MENU,self.onAbout,id=wx.ID_ABOUT)
         menubar.Append(file,'&File')
         menubar.Append(help,'&Help')
         self.SetMenuBar(menubar)
@@ -65,6 +65,7 @@ class Principal(wx.Frame):
         TextWhite.SetForegroundColour('#000000')
         wx.StaticText(self,-1,'Captures',(600,100))
         wx.StaticText(self,-1,'Captures',(700,100))
+        self.escribir_coordenadas()
 
         #Muestra
         self.Centre()
@@ -91,7 +92,47 @@ class Principal(wx.Frame):
 
         dc.EndDrawing()
 
+    def escribir_coordenadas(self):
+        wx.StaticText(self,-1,"A",(32,6))
+        wx.StaticText(self,-1,"B",(52,6))
+        wx.StaticText(self,-1,"C",(75,6))
+        wx.StaticText(self,-1,"D",(98,6))
+        wx.StaticText(self,-1,"E",(121,6))
+        wx.StaticText(self,-1,"F",(144,6))
+        wx.StaticText(self,-1,"G",(167,6))
+        wx.StaticText(self,-1,"H",(190,6))
+        wx.StaticText(self,-1,"J",(213,6))
+        wx.StaticText(self,-1,"K",(236,6))
+        wx.StaticText(self,-1,"L",(259,6))
+        wx.StaticText(self,-1,"M",(282,6))
+        wx.StaticText(self,-1,"N",(305,6))
+        wx.StaticText(self,-1,"O",(328,6))
+        wx.StaticText(self,-1,"P",(351,6))
+        wx.StaticText(self,-1,"Q",(374,6))
+        wx.StaticText(self,-1,"R",(397,6))
+        wx.StaticText(self,-1,"S",(420,6))
+        wx.StaticText(self,-1,"T",(443,6))
 
+        wx.StaticText(self,-1,"1",(6,32))
+        wx.StaticText(self,-1,"2",(6,52))
+        wx.StaticText(self,-1,"3",(6,75))
+        wx.StaticText(self,-1,"4",(6,98))
+        wx.StaticText(self,-1,"5",(6,121))
+        wx.StaticText(self,-1,"6",(6,144))
+        wx.StaticText(self,-1,"7",(6,167))
+        wx.StaticText(self,-1,"8",(6,190))
+        wx.StaticText(self,-1,"9",(6,213))
+        wx.StaticText(self,-1,"10",(6,236))
+        wx.StaticText(self,-1,"11",(6,259))
+        wx.StaticText(self,-1,"12",(6,282))
+        wx.StaticText(self,-1,"13",(6,305))
+        wx.StaticText(self,-1,"14",(6,328))
+        wx.StaticText(self,-1,"15",(6,351))
+        wx.StaticText(self,-1,"16",(6,374))
+        wx.StaticText(self,-1,"17",(6,397))
+        wx.StaticText(self,-1,"18",(6,420))
+        wx.StaticText(self,-1,"19",(6,443))
+    
     def onQuit(self,event):
         self.Close()
 
@@ -189,6 +230,10 @@ class Principal(wx.Frame):
         wx.StaticText(self,-1,activar,(500,500))
         self.lastmove=activar
 
+    def onAbout(self,event):
+        wx.MessageBox('PyGoBoard 0.1.D', 'Info', wx.OK | wx.ICON_INFORMATION)
+    #-----------------MAPPERS AND DEMAPPERS-----------
+
     def mapear(self,jugada): #cambia valores en el tablero.
         #0=Nada, 1=Blanco 2=Negro 3=Borde
         jx=self.jugadas[jugada[2]]
@@ -199,12 +244,10 @@ class Principal(wx.Frame):
         else: #blanco
             self.tablero.set_valor(jx,jy,1)
             opuesto=2
-        print opuesto
         #Busco que a los costados haya algo color opuesto como para ver si lo mato
         if(self.tablero.get_valor(jx-1,jy)==opuesto):
             grupo=self.tablero.buscar_grupos(jx-1,jy)
             cant_lib=self.tablero.contar_libertades(grupo)
-            print "Izquierda"+str(cant_lib)
             if(cant_lib==0):
                 for i in range(0,len(grupo)):
                     self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
@@ -212,7 +255,6 @@ class Principal(wx.Frame):
         if(self.tablero.get_valor(jx+1,jy)==opuesto):
             grupo=self.tablero.buscar_grupos(jx+1,jy)
             cant_lib=self.tablero.contar_libertades(grupo)
-            print "Derecha"+str(cant_lib)
             if(cant_lib==0):
                 for i in range(0,len(grupo)):
                     self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
@@ -220,7 +262,6 @@ class Principal(wx.Frame):
         if(self.tablero.get_valor(jx,jy-1)==opuesto):
             grupo=self.tablero.buscar_grupos(jx,jy-1)
             cant_lib=self.tablero.contar_libertades(grupo)
-            print "Arriba"+str(cant_lib)
             if(cant_lib==0):
                 for i in range(0,len(grupo)):
                     self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
@@ -228,7 +269,6 @@ class Principal(wx.Frame):
         if(self.tablero.get_valor(jx,jy+1)==opuesto):
             grupo=self.tablero.buscar_grupos(jx,jy+1)
             cant_lib=self.tablero.contar_libertades(grupo)
-            print "Abajo"+str(cant_lib)
             if(cant_lib==0):
                 for i in range(0,len(grupo)):
                     self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)

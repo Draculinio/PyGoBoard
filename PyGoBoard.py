@@ -5,7 +5,7 @@
 ---------------------------------
 -----------PyGoBoard-------------
 ---------------------------------
-Version 0.1.D
+Version 0.1.E
 By Pablo Soifer -Draculinio-
 stackpointerex@gmail.com
 
@@ -29,7 +29,7 @@ class Principal(wx.Frame):
         self.tablero= Goban()
         self.temporal=0
         self.lastmove="" #the array of the last move.
-
+        self.path="" #For the path that all command functions will take
         #Menu
         menubar=wx.MenuBar()
         file=wx.Menu()
@@ -66,7 +66,7 @@ class Principal(wx.Frame):
         wx.StaticText(self,-1,'Captures',(600,100))
         wx.StaticText(self,-1,'Captures',(700,100))
         self.escribir_coordenadas()
-
+        wx.StaticText(self,-1,'Last Move',(800,600))
         #Muestra
         self.Centre()
         self.Show()
@@ -132,37 +132,32 @@ class Principal(wx.Frame):
         wx.StaticText(self,-1,"17",(6,397))
         wx.StaticText(self,-1,"18",(6,420))
         wx.StaticText(self,-1,"19",(6,443))
-    
+
     def onQuit(self,event):
         self.Close()
 
     def onOpen(self,event):
         dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.sgf", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            mypath = os.path.basename(path)
-            finalpath=path+mypath
-            finalpath=finalpath[1:len(finalpath)]
-            file=open(path,"r")
+            self.path = dlg.GetPath()
+            mypath = os.path.basename(self.path)
+            #finalpath=path+mypath
+            #finalpath=finalpath[1:len(finalpath)]
+            file=open(self.path,"r")
             SuccessFile=file.read(2)
             if(SuccessFile!='(;'):
                 wx.MessageBox("Invalid File",SuccessFile,wx.OK)
             #Ahora salgo a leer los datos del partido
             else:
-                alcanzado=0
-                while alcanzado!=2:
-                    linea=file.readline()
-                    if("PB[" in linea):
-                        cantidad=len(linea)
-                        wx.StaticText(self,-1,linea[3:cantidad-2],(600,70))
-                        alcanzado=alcanzado+1
-                    if("PW[" in linea):
-                        cantidad=len(linea)
-                        wx.StaticText(self,-1,linea[3:cantidad-2],(700,70))
-                    if (linea==""):
-                        alcanzado=2
+                #delete the fields so if I open a new game in the middle of one, the names are not overwrited
+                wx.StaticText(self,-1,"                        ",(600,70))
+                wx.StaticText(self,-1,"                        ",(700,70))
+                playerw=self.buscar_jugador(file,"W")
+                wx.StaticText(self,-1,playerw,(600,70))
+                playerb=self.buscar_jugador(file,"B")
+                wx.StaticText(self,-1,playerb,(700,70))
                 file.close()
-                file=open(path,"r")
+                file=open(self.path,"r")
                 #Armo un array con todo el partido
                 alcanzado=0
                 fin_de_archivo=0
@@ -280,7 +275,48 @@ class Principal(wx.Frame):
         self.tablero.set_valor(jx,jy,0)
         self.Refresh()
 
+#--------------------------------------------------
+#----------------------COMANDOS DEL ARCHIVO--------
+#--------------------------------------------------
+    def buscar_version(file):
+        file=open(self.path,"r")
+        version=0
+        encontrado=0
+        while encontrado==0:
+            linea=file.readline()
+            if("FF[" in linea):
+                encontrado=1
+                for i in range(0,len(linea)):
+                    if(linea[i]=="F" and linea[i+1]=="F" and linea[i+2]=="["):
+                        version=linea[i+3]
+                        break
+        return version
 
+    def buscar_jugador(self,file,color):
+        file=open(self.path,"r")
+        name=""
+        encontrado=0
+        while encontrado==0:
+            linea=file.readline()
+            if(color=="B"):
+                if("PB[" in linea):
+                    encontrado=1
+                    for i in range(0,len(linea)):
+                        if(linea[i]=="[" and linea[i-1]=="B" and linea[i-2]=="P"):
+                            j=i+1
+                            while linea[j]!="]":
+                                name=name+linea[j]
+                                j=j+1
+            if(color=="W"):
+                if("PW[" in linea):
+                    encontrado=1
+                    for i in range(0,len(linea)):
+                        if(linea[i]=="[" and linea[i-1]=="W" and linea[i-2]=="P"):
+                            j=i+1
+                            while linea[j]!="]":
+                                name=name+linea[j]
+                                j=j+1
+        return name
 #----------------------------------------------
 #--GOBAN
 #-Class with the board

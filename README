@@ -1,3 +1,10 @@
+Version 0.1.E
+--------------
+
+-Started to create commands to parse the file. It solves some problems with SGF versions
+-Created a command buscar_jugador to search for player names.
+-Created a command version tyo search for SGF version. It is not showed in the program yet, but the command exists.
+
 Version 0.1.D
 --------------
 

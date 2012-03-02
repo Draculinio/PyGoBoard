@@ -1,3 +1,10 @@
+Version 0.2
+------------
+
+-Reset goban function created for this new version.
+-Separated the visual class (Principal) from the parser (now in Parser Class).
+-Quitted Demap method, now it only goes the whole game until the pointer of the move number.
+
 Version 0.1.E
 --------------
 

@@ -5,7 +5,7 @@
 ---------------------------------
 -----------PyGoBoard-------------
 ---------------------------------
-Version 0.1.E
+Version 0.2
 By Pablo Soifer -Draculinio-
 stackpointerex@gmail.com
 
@@ -21,7 +21,7 @@ class Principal(wx.Frame):
 
         self.SetSize((800,600))
         self.SetTitle="PyGoBoard"
-
+        self.parser=Parser()
         #Variables varias
         self.juego=[]
         self.puntero_jugada=0
@@ -29,7 +29,7 @@ class Principal(wx.Frame):
         self.tablero= Goban()
         self.temporal=0
         self.lastmove="" #the array of the last move.
-        self.path="" #For the path that all command functions will take
+        #self.path="" #For the path that all command functions will take
         #Menu
         menubar=wx.MenuBar()
         file=wx.Menu()
@@ -67,6 +67,7 @@ class Principal(wx.Frame):
         wx.StaticText(self,-1,'Captures',(700,100))
         self.escribir_coordenadas()
         wx.StaticText(self,-1,'Last Move',(800,600))
+        wx.StaticText(self,-1,'Rules:',(550,350))
         #Muestra
         self.Centre()
         self.Show()
@@ -139,184 +140,42 @@ class Principal(wx.Frame):
     def onOpen(self,event):
         dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.sgf", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            self.path = dlg.GetPath()
-            mypath = os.path.basename(self.path)
-            #finalpath=path+mypath
-            #finalpath=finalpath[1:len(finalpath)]
-            file=open(self.path,"r")
-            SuccessFile=file.read(2)
-            if(SuccessFile!='(;'):
+            path = dlg.GetPath()
+            self.parser.set_file(path)
+            if(self.parser.verify_file()==False):
                 wx.MessageBox("Invalid File",SuccessFile,wx.OK)
             #Ahora salgo a leer los datos del partido
             else:
                 #delete the fields so if I open a new game in the middle of one, the names are not overwrited
                 wx.StaticText(self,-1,"                        ",(600,70))
                 wx.StaticText(self,-1,"                        ",(700,70))
-                playerw=self.buscar_jugador(file,"W")
+                playerw=self.parser.search_com("PW")
                 wx.StaticText(self,-1,playerw,(600,70))
-                playerb=self.buscar_jugador(file,"B")
+                playerb=self.parser.search_com("PB")
                 wx.StaticText(self,-1,playerb,(700,70))
-                file.close()
-                file=open(self.path,"r")
-                #Armo un array con todo el partido
-                alcanzado=0
-                fin_de_archivo=0
-                flag_cantidad=0
-                while fin_de_archivo==0:
-                    caracter=file.read(1)
-                    self.juego.append(caracter)
-                    if(caracter==""):
-                        fin_de_archivo=1
-                #Quito lo que no me interesa
-                cant=0
-                temp=[]
-                for i in range(0,len(self.juego)-1):
-                    if(self.juego[i]==';'):
-                        cant=cant+1
-                    if(cant>=2):
-                        temp.append(self.juego[i])
-                self.juego=temp
-            file.close()
-            self.forward.Enable()
-        dlg.Destroy()
+                reglas=self.parser.search_com("RU")
+                wx.StaticText(self,-1,reglas,(600,350))
+                self.parser.set_game() #Make the game array
+                self.forward.Enable()
+            dlg.Destroy()
 
     def Posterior(self,event):
-        activar=""
         self.puntero_jugada=self.puntero_jugada+1
-        flag_encontrado=0 #Encontró la jugada
-        puntero_busqueda=0 #Busqueda dentro del vector
-        puntero_cantidad=0 #cuantos ; encontro, al ser igual que la cantidad de jugadas es esa.
-        while flag_encontrado==0:
-            if (self.juego[puntero_busqueda]==';'):
-                puntero_cantidad=puntero_cantidad+1
-                if(puntero_cantidad==self.puntero_jugada): #Encontro la jugada
-                    flag_encontrado=1
-                    for i in range(1,6):
-                        activar=activar+self.juego[puntero_busqueda+i]
-            puntero_busqueda=puntero_busqueda+1
-            #wx.StaticText(self,-1,activar,(500,500))
-            self.lastmove=activar
-        wx.StaticText(self,-1,activar,(500,500))
-        self.mapear(activar)
+        self.tablero=self.parser.parse_game(self.puntero_jugada)
+        self.Refresh()
         if(self.back.Enable()=='False'):
             self.back.Enable()
 
     def Previous(self,event):
-        activar=""
-        flag_encontrado=0
-        puntero_busqueda=0
-        puntero_cantidad=0
-        #First, remove last move.
-        self.desmapear(self.lastmove)
-        #go back one move
         self.puntero_jugada=self.puntero_jugada-1
-        #and put in last move the actual last move
-        if(self.puntero_jugada!=0): #Si no es la primer jugada
-            while flag_encontrado==0:
-                if (self.juego[puntero_busqueda]==';'):
-                    puntero_cantidad=puntero_cantidad+1
-                    if(puntero_cantidad==self.puntero_jugada): #Encontro la jugada
-                        flag_encontrado=1
-                        for i in range(1,6):
-                            activar=activar+self.juego[puntero_busqueda+i]
-                puntero_busqueda=puntero_busqueda+1
-        else: #First move, so I disable back button
+        self.tablero=self.parser.parse_game(self.puntero_jugada)
+        self.Refresh()
+        if(self.puntero_jugada==0):
             self.back.Disable()
-        wx.StaticText(self,-1,activar,(500,500))
-        self.lastmove=activar
 
     def onAbout(self,event):
-        wx.MessageBox('PyGoBoard 0.1.D', 'Info', wx.OK | wx.ICON_INFORMATION)
-    #-----------------MAPPERS AND DEMAPPERS-----------
+        wx.MessageBox('PyGoBoard 0.2', 'Info', wx.OK | wx.ICON_INFORMATION)
 
-    def mapear(self,jugada): #cambia valores en el tablero.
-        #0=Nada, 1=Blanco 2=Negro 3=Borde
-        jx=self.jugadas[jugada[2]]
-        jy=self.jugadas[jugada[3]]
-        if(jugada[0]=="B"): #negro
-            self.tablero.set_valor(jx,jy,2)
-            opuesto=1
-        else: #blanco
-            self.tablero.set_valor(jx,jy,1)
-            opuesto=2
-        #Busco que a los costados haya algo color opuesto como para ver si lo mato
-        if(self.tablero.get_valor(jx-1,jy)==opuesto):
-            grupo=self.tablero.buscar_grupos(jx-1,jy)
-            cant_lib=self.tablero.contar_libertades(grupo)
-            if(cant_lib==0):
-                for i in range(0,len(grupo)):
-                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
-
-        if(self.tablero.get_valor(jx+1,jy)==opuesto):
-            grupo=self.tablero.buscar_grupos(jx+1,jy)
-            cant_lib=self.tablero.contar_libertades(grupo)
-            if(cant_lib==0):
-                for i in range(0,len(grupo)):
-                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
-
-        if(self.tablero.get_valor(jx,jy-1)==opuesto):
-            grupo=self.tablero.buscar_grupos(jx,jy-1)
-            cant_lib=self.tablero.contar_libertades(grupo)
-            if(cant_lib==0):
-                for i in range(0,len(grupo)):
-                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
-
-        if(self.tablero.get_valor(jx,jy+1)==opuesto):
-            grupo=self.tablero.buscar_grupos(jx,jy+1)
-            cant_lib=self.tablero.contar_libertades(grupo)
-            if(cant_lib==0):
-                for i in range(0,len(grupo)):
-                    self.tablero.set_valor(self.tablero.posiciones(grupo[i][0]),self.tablero.posiciones(grupo[i][1]),0)
-        self.Refresh()
-
-    def desmapear(self,jugada): #desmapea una jugada
-        jx=self.jugadas[jugada[2]]
-        jy=self.jugadas[jugada[3]]
-        self.tablero.set_valor(jx,jy,0)
-        self.Refresh()
-
-#--------------------------------------------------
-#----------------------COMANDOS DEL ARCHIVO--------
-#--------------------------------------------------
-    def buscar_version(file):
-        file=open(self.path,"r")
-        version=0
-        encontrado=0
-        while encontrado==0:
-            linea=file.readline()
-            if("FF[" in linea):
-                encontrado=1
-                for i in range(0,len(linea)):
-                    if(linea[i]=="F" and linea[i+1]=="F" and linea[i+2]=="["):
-                        version=linea[i+3]
-                        break
-        return version
-
-    def buscar_jugador(self,file,color):
-        file=open(self.path,"r")
-        name=""
-        encontrado=0
-        while encontrado==0:
-            linea=file.readline()
-            if(color=="B"):
-                if("PB[" in linea):
-                    encontrado=1
-                    for i in range(0,len(linea)):
-                        if(linea[i]=="[" and linea[i-1]=="B" and linea[i-2]=="P"):
-                            j=i+1
-                            while linea[j]!="]":
-                                name=name+linea[j]
-                                j=j+1
-            if(color=="W"):
-                if("PW[" in linea):
-                    encontrado=1
-                    for i in range(0,len(linea)):
-                        if(linea[i]=="[" and linea[i-1]=="W" and linea[i-2]=="P"):
-                            j=i+1
-                            while linea[j]!="]":
-                                name=name+linea[j]
-                                j=j+1
-        return name
 #----------------------------------------------
 #--GOBAN
 #-Class with the board
@@ -349,8 +208,14 @@ class Goban():
 
     def set_valor(self,px,py,valor):
         self.tablero[px][py]=valor
+
     def get_valor(self,px,py):
         return self.tablero[px][py]
+
+    def reset_goban(self):
+        for i in range (1,20):
+            for j in range(1,20):
+                self.tablero[i][j]=0
 
     def buscar_grupos(self,x,y):
         posicion=0
@@ -429,7 +294,123 @@ class Goban():
             if(self.asociativa[i]==posicion):
                 a=i
         return a
+#---------------------------------------------------
+#------PARSER---------------------------------------
+#---------------------------------------------------
 
+class Parser():
+    def __init__(self):
+        self.path=""
+        self.game=[] #this will have the game itself
+        self.goban=Goban()
+        self.jugadas={"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":12,"m":13,"n":14,"o":15,"p":16,"q":17,"r":18,"s":19}
+
+    def set_file(self,archivo):
+        self.path=archivo
+
+    def set_game(self):
+        file=open(self.path,"r")
+        #Armo un array con todo el partido
+        temp=[]
+        alcanzado=0
+        cant=0
+        self.game=file.read()
+        file.close()
+        #Quito lo que no me interesa
+        for i in range(0,len(self.game)):
+            if(self.game[i]==';'):
+                cant=cant+1
+            if(cant>=2):
+                temp.append(self.game[i])
+        self.game=temp
+
+    def verify_file(self): #Verifies if the file is a valid sgf file
+        retorno=False
+        file=open(self.path,"r")
+        SuccessFile=file.read(2)
+        if(SuccessFile=='(;'):
+            retorno=True
+        file.close()
+        return retorno
+
+    def search_com(self,comando): #Searches for a command
+        retorno=""
+        file=open(self.path,"r")
+        encontrado=0
+        while encontrado==0:
+            linea=file.readline()
+            if(comando+"[" in linea):
+                encontrado=1
+                for i in range(0,len(linea)):
+                    if(linea[i]=="[" and linea[i-1]==comando[1] and linea[i-2]==comando[0]):
+                        j=i+1
+                        while linea[j]!="]":
+                            retorno=retorno+linea[j]
+                            j=j+1
+            if(linea==""):
+                retorno="-"
+                encontrado=1
+        file.close()
+        return retorno
+
+    def parse_game(self,move_number):
+        self.goban.reset_goban()
+        puntero_busqueda=0
+        for i in range(0,move_number):
+            activar=""
+            flag_encontrado=False
+            while flag_encontrado!=True:
+                if(self.game[puntero_busqueda]==";"):
+                    flag_encontrado=True
+                    for j in range(1,6):
+                        activar=activar+self.game[puntero_busqueda+j]
+                    self.mapear(activar)
+                puntero_busqueda=puntero_busqueda+1
+        return self.goban
+
+    def mapear(self,jugada): #cambia valores en el tablero.
+        #0=Nada, 1=Blanco 2=Negro 3=Borde
+        jx=self.jugadas[jugada[2]]
+        jy=self.jugadas[jugada[3]]
+        if(jugada[0]=="B"): #negro
+            self.goban.set_valor(jx,jy,2)
+            opuesto=1
+        else: #blanco
+            self.goban.set_valor(jx,jy,1)
+            opuesto=2
+        #Busco que a los costados haya algo color opuesto como para ver si lo mato
+        if(self.goban.get_valor(jx-1,jy)==opuesto):
+            grupo=self.goban.buscar_grupos(jx-1,jy)
+            cant_lib=self.goban.contar_libertades(grupo)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.goban.set_valor(self.goban.posiciones(grupo[i][0]),self.goban.posiciones(grupo[i][1]),0)
+
+        if(self.goban.get_valor(jx+1,jy)==opuesto):
+            grupo=self.goban.buscar_grupos(jx+1,jy)
+            cant_lib=self.goban.contar_libertades(grupo)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.goban.set_valor(self.goban.posiciones(grupo[i][0]),self.goban.posiciones(grupo[i][1]),0)
+
+        if(self.goban.get_valor(jx,jy-1)==opuesto):
+            grupo=self.goban.buscar_grupos(jx,jy-1)
+            cant_lib=self.goban.contar_libertades(grupo)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.goban.set_valor(self.goban.posiciones(grupo[i][0]),self.goban.posiciones(grupo[i][1]),0)
+
+        if(self.goban.get_valor(jx,jy+1)==opuesto):
+            grupo=self.goban.buscar_grupos(jx,jy+1)
+            cant_lib=self.goban.contar_libertades(grupo)
+            if(cant_lib==0):
+                for i in range(0,len(grupo)):
+                    self.goban.set_valor(self.goban.posiciones(grupo[i][0]),self.goban.posiciones(grupo[i][1]),0)
+        #self.Refresh()
+
+#-------------------------------------------------
+#---------------------MAIN------------------------
+#-------------------------------------------------
 
 if __name__ == '__main__':
     app = wx.App()
